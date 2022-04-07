@@ -1,0 +1,55 @@
+version: '3.7'
+services:
+    web:
+        image: p1m
+        build:
+            dockerfile: web.Dockerfile
+        restart: always
+        environment:
+            OVPN_SUPERVISOR_SID: 'x239b5-DARPA'
+            OVPN_MESSAGE_API_ADDRESS: 'https://chat.googleapis.com/v1/spaces/AAAAcMtcly8/messages?key=AIzaSyDdI0hCZtWEfRq3CPzqKqqsHI&token=E5UBiGYHrQfXbSALJc6DFU0iBe0_EnTcHWAv6c-ufpA%3D'
+        ports:
+            - '80:80'
+        depends_on:
+            - 'db'
+        devices:
+            - /dev/net/tun:/dev/net/tun
+        cap_add:
+            - NET_ADMIN
+        networks:
+            frontend:
+                ipv4_address: 172.20.0.10
+        volumes:
+            - ./openvpn-client:/etc/openvpn
+            - ./html:/var/www/html
+    db:
+        image: mysql:8.0.28
+        build:
+            dockerfile: db.Dockerfile
+        restart: always
+        environment:
+            MYSQL_DATABASE: 'db'
+            MYSQL_ROOT_PASSWORD: 'pass-nil'
+            MYSQL_USER: 'jalapenio'
+            MYSQL_PASSWORD: 'pass-set'
+            MYSQL_USER_HOST: '%'
+        ports:
+            - '3306:3306'
+            - '1194:1194'
+        volumes:
+            - my-db:/var/lib/mysql
+            - ./openvpn-server:/etc/openvpn
+        devices:
+            - /dev/net/tun:/dev/net/tun
+        cap_add:
+            - NET_ADMIN
+        networks:
+            frontend:
+                ipv4_address: 172.20.0.11
+networks:
+    frontend:
+        ipam:
+            config:
+                - subnet: 172.20.0.0/24
+volumes:
+    my-db:
